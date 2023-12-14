@@ -34,6 +34,7 @@ class StoryComposerPage extends StatefulWidget {
 }
 
 class _StoryComposerPageState extends State<StoryComposerPage> {
+  final _key = GlobalKey<StoryComposerCanvasState>();
   late final List<Widget> _children;
 
   @override
@@ -94,14 +95,35 @@ class _StoryComposerPageState extends State<StoryComposerPage> {
         title: const Text('Story Composer'),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: Icon(
+            onPressed: () async {
+              final image = await _key.currentState!.controller.render();
+
+              // ignore: use_build_context_synchronously
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Rendered image'),
+                    content: SizedBox(
+                      width: 1080.0,
+                      height: 1920.0,
+                      child: RawImage(
+                        image: image,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            icon: const Icon(
               Icons.save,
             ),
           ),
         ],
       ),
       body: StoryComposerCanvas(
+        key: _key,
         size: const Size(1080, 1920),
         trashAreaWidget: const StoryTrashAreaWidget(),
         onWidgetRemoved: (key) {

@@ -1,17 +1,23 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:story_composer/src/_src.dart';
+import 'dart:ui' as ui;
 
 class StoryComposerController extends ChangeNotifier {
   StoryComposerController({
     required this.guides,
     required this.size,
+    required this.getChildPaintIndex,
     required this.onWidgetRemoved,
+    this.backgroundColor,
   });
 
   final Size size;
   final Guides guides;
+  final int Function(BuildContext) getChildPaintIndex;
   final void Function(Key)? onWidgetRemoved;
+  final Color? backgroundColor;
 
   Offset get center => size.center(Offset.zero);
 
@@ -95,5 +101,37 @@ class StoryComposerController extends ChangeNotifier {
   void dispose() {
     _activeTransformation?.dispose();
     super.dispose();
+  }
+
+  final _renderables = <GlobalKey>[];
+
+  void attachRenderable(GlobalKey key) {
+    _renderables.add(key);
+  }
+
+  void detachRenderable(GlobalKey key) {
+    _renderables.remove(key);
+  }
+
+  Future<ui.Image> render() async {
+    // Sort renderables by their paint index.
+    _renderables.sort((a, b) {
+      final aIndex = getChildPaintIndex(a.currentContext!);
+      final bIndex = getChildPaintIndex(b.currentContext!);
+
+      return aIndex.compareTo(bIndex);
+    });
+
+    final images = await renderRepaintBoundaries(
+      _renderables
+          .map((v) =>
+              v.currentContext!.findRenderObject() as RenderRepaintBoundary)
+          .toList(),
+    );
+
+    return composeLayeredImages(
+      images,
+      backgroundColor: backgroundColor,
+    );
   }
 }

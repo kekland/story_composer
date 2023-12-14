@@ -13,12 +13,14 @@ class StoryOverlayWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StoryTransformableWidget(
-      key: key!,
-      initialTransform: initialTransform,
-      isPersistent: true,
-      transformationPointerCount: 1,
-      child: child,
+    return StoryRenderableWidget(
+      child: StoryTransformableWidget(
+        key: key!,
+        initialTransform: initialTransform,
+        isPersistent: true,
+        transformationPointerCount: 1,
+        child: child,
+      ),
     );
   }
 }

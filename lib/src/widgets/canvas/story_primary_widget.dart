@@ -13,12 +13,14 @@ class StoryPrimaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StoryTransformableWidget(
-      key: key!,
-      initialTransform: initialTransform ?? Matrix4.identity(),
-      transformationPointerCount: 2,
-      isPersistent: false,
-      child: child,
+    return StoryRenderableWidget(
+      child: StoryTransformableWidget(
+        key: key!,
+        initialTransform: initialTransform ?? Matrix4.identity(),
+        transformationPointerCount: 2,
+        isPersistent: false,
+        child: child,
+      ),
     );
   }
 }

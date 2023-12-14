@@ -3,6 +3,7 @@ export 'canvas/story_composer_canvas.dart';
 export 'canvas/story_overlay_widget.dart';
 export 'canvas/story_primary_widget.dart';
 export 'guide/guide_painter.dart';
+export 'renderable/story_renderable_widget.dart';
 export 'transformable/story_transformable_widget.dart';
 export 'transformable/transform_gesture_detector.dart';
 export 'transformable/transform_gesture_recognizer.dart';

@@ -22,13 +22,15 @@ class StoryComposerCanvas extends StatefulWidget {
   final Guides? guides;
 
   @override
-  State<StoryComposerCanvas> createState() => _StoryComposerCanvasState();
+  State<StoryComposerCanvas> createState() => StoryComposerCanvasState();
 }
 
-class _StoryComposerCanvasState extends State<StoryComposerCanvas> {
+class StoryComposerCanvasState extends State<StoryComposerCanvas> {
   final _canvasKey = GlobalKey();
-  late final _controller = StoryComposerController(
+  late final controller = StoryComposerController(
     size: widget.size,
+    backgroundColor: widget.backgroundColor,
+    getChildPaintIndex: getChildIndex,
     onWidgetRemoved: widget.onWidgetRemoved,
     guides: widget.guides ??
         Guides.fromSizeAndPadding(
@@ -36,6 +38,23 @@ class _StoryComposerCanvasState extends State<StoryComposerCanvas> {
           padding: const EdgeInsets.all(32.0),
         ),
   );
+
+  int getChildIndex(BuildContext context) {
+    Widget? ancestor;
+
+    context.visitAncestorElements((e) {
+      if (widget.children.contains(e.widget)) {
+        ancestor = e.widget;
+        return false;
+      } else if (e.widget == widget) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return ancestor != null ? widget.children.indexOf(ancestor!) : -1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,12 +75,12 @@ class _StoryComposerCanvasState extends State<StoryComposerCanvas> {
                       ...widget.children,
                       IgnorePointer(
                         child: ValueListenableBuilder(
-                          valueListenable: _controller.activeGuides,
+                          valueListenable: controller.activeGuides,
                           builder: (context, activeGuides, _) => CustomPaint(
                             painter: DebugGuidesPainter(
                               guides: activeGuides,
                             ),
-                            size: _controller.size,
+                            size: controller.size,
                           ),
                         ),
                       ),
@@ -81,7 +100,7 @@ class _StoryComposerCanvasState extends State<StoryComposerCanvas> {
     );
 
     return InheritedStoryComposerController(
-      controller: _controller,
+      controller: controller,
       child: child,
     );
   }

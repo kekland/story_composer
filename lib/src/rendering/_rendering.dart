@@ -16,9 +16,16 @@ Future<List<ui.Image>> renderRepaintBoundaries(
   return images;
 }
 
-Future<ui.Image> composeLayeredImages(List<ui.Image> images) {
+Future<ui.Image> composeLayeredImages(
+  List<ui.Image> images, {
+  Color? backgroundColor,
+}) {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
+
+  if (backgroundColor != null) {
+    canvas.drawColor(backgroundColor, BlendMode.src);
+  }
 
   for (final image in images) {
     canvas.drawImage(image, Offset.zero, Paint());
