@@ -9,7 +9,7 @@ class StoryPrimaryWidget extends StatelessWidget {
   }) : super(key: key);
 
   final Matrix4? initialTransform;
-  final PreferredSizeWidget child;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {

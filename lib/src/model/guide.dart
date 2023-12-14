@@ -106,42 +106,42 @@ class Guides {
       guides: [
         // Left
         VerticalGuide(
-          dx: -size.width / 2.0 + padding.left,
+          dx: padding.left,
           debugLabel: 'left',
           snapEdge: GuideSnapEdge.start,
         ),
 
         // Right
         VerticalGuide(
-          dx: size.width / 2.0 - padding.right,
+          dx: size.width - padding.right,
           debugLabel: 'right',
           snapEdge: GuideSnapEdge.end,
         ),
 
         // Top
         HorizontalGuide(
-          dy: -size.height / 2.0 + padding.top,
+          dy: padding.top,
           debugLabel: 'top',
           snapEdge: GuideSnapEdge.start,
         ),
 
         // Bottom
         HorizontalGuide(
-          dy: size.height / 2.0 - padding.bottom,
+          dy: size.height - padding.bottom,
           debugLabel: 'bottom',
           snapEdge: GuideSnapEdge.end,
         ),
 
         // Center X
         VerticalGuide(
-          dx: 0.0,
+          dx: size.width / 2.0,
           debugLabel: 'center x',
           snapEdge: GuideSnapEdge.center,
         ),
 
         // Center Y
         HorizontalGuide(
-          dy: 0.0,
+          dy: size.height / 2.0,
           debugLabel: 'center y',
           snapEdge: GuideSnapEdge.center,
         ),

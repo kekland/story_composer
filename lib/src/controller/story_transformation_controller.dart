@@ -74,8 +74,7 @@ class StoryTransformationController extends ChangeNotifier {
   void _computeSnapTransform() {
     final _aabb = MatrixUtils.transformRect(
       _initialTransform * _currentTransform,
-      Offset(-untransformedSize.width / 2, -untransformedSize.height / 2) &
-          untransformedSize,
+      Offset.zero & untransformedSize,
     );
 
     final snappedRect = Guides.getSnappedRect(
@@ -84,15 +83,9 @@ class StoryTransformationController extends ChangeNotifier {
       verticalGuide: _snapVerticalGuide,
     );
 
-    print('horiz: $_snapHorizontalGuide');
-    print('vert: $_snapVerticalGuide');
-
-    print('snapped: $snappedRect');
-
-    final t = (_initialTransform * _currentTransform).getTranslation();
     _snapTransform.setTranslationRaw(
-      -t.x + snappedRect.center.dx,
-      -t.y + snappedRect.center.dy,
+      -_aabb.topLeft.dx + snappedRect.topLeft.dx,
+      -_aabb.topLeft.dy + snappedRect.topLeft.dy,
       0.0,
     );
   }
@@ -112,7 +105,7 @@ class StoryTransformationController extends ChangeNotifier {
   }
 
   void _updateSnap(TransformUpdateDetails details) {
-    if (!details.hasSinglePointer) {
+    if (!details.hasSinglePointer || _isInTrashArea) {
       _snapHorizontalGuide = null;
       _snapVerticalGuide = null;
       return;
@@ -120,11 +113,8 @@ class StoryTransformationController extends ChangeNotifier {
 
     final _aabb = MatrixUtils.transformRect(
       _initialTransform * _currentTransform,
-      Offset(-untransformedSize.width / 2, -untransformedSize.height / 2) &
-          untransformedSize,
+      Offset.zero & untransformedSize,
     );
-
-    print(_aabb);
 
     final velocity =
         details.pointerVelocities.first.pixelsPerSecond.distanceSquared;

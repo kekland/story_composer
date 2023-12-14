@@ -16,14 +16,14 @@ class DebugGuidesPainter extends CustomPainter {
     for (final guide in guides) {
       if (guide is HorizontalGuide) {
         canvas.drawLine(
-          Offset(0, guide.dy + size.height / 2.0),
-          Offset(size.width, guide.dy + size.height / 2.0),
+          Offset(0, guide.dy),
+          Offset(size.width, guide.dy),
           paint,
         );
       } else if (guide is VerticalGuide) {
         canvas.drawLine(
-          Offset(guide.dx + size.width / 2.0, 0),
-          Offset(guide.dx + size.width / 2.0, size.height),
+          Offset(guide.dx, 0),
+          Offset(guide.dx, size.height),
           paint,
         );
       }

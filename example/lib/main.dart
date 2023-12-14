@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Story Composer',
       showPerformanceOverlay: false,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepPurple,
@@ -42,27 +43,21 @@ class _StoryComposerPageState extends State<StoryComposerPage> {
     _children = [
       StoryPrimaryWidget(
         key: const Key('primary'),
-        child: PreferredSize(
-          preferredSize: const Size(1080.0, 1920.0),
-          child: SizedBox(
-            width: 1080.0,
-            height: 1920.0,
-            child: Image.network(
-              'https://test-photos-qklwjen.s3.eu-west-3.amazonaws.com/image11.jpg',
-              fit: BoxFit.cover,
-            ),
+        child: SizedBox(
+          width: 1080.0,
+          height: 1920.0,
+          child: Image.network(
+            'https://test-photos-qklwjen.s3.eu-west-3.amazonaws.com/image11.jpg',
+            fit: BoxFit.cover,
           ),
         ),
       ),
       StoryOverlayWidget(
         key: const Key('red'),
-        child: PreferredSize(
-          preferredSize: const Size(250.0, 250.0),
-          child: Container(
-            width: 250.0,
-            height: 250.0,
-            color: Colors.red,
-          ),
+        child: Container(
+          width: 250.0,
+          height: 250.0,
+          color: Colors.red,
         ),
       ),
       // StoryOverlayWidget(
@@ -97,6 +92,14 @@ class _StoryComposerPageState extends State<StoryComposerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Story Composer'),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+              Icons.save,
+            ),
+          ),
+        ],
       ),
       body: StoryComposerCanvas(
         size: const Size(1080, 1920),

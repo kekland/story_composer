@@ -15,7 +15,7 @@ class StoryTransformableWidget extends StatefulWidget {
   final int transformationPointerCount;
   final bool isPersistent;
   final StoryTrashAreaReactionBuilderFn trashAreaReactionBuilder;
-  final PreferredSizeWidget child;
+  final Widget child;
 
   @override
   State<StoryTransformableWidget> createState() =>
@@ -25,6 +25,7 @@ class StoryTransformableWidget extends StatefulWidget {
 class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
   Size? _size;
   var _transform = Matrix4.identity();
+  var _didSetTransform = false;
 
   late final StoryComposerController _composerController;
   StoryTransformationController? _transformationController;
@@ -33,6 +34,11 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _composerController = StoryComposerController.of(context);
+
+    if (widget.initialTransform != null) {
+      _transform = widget.initialTransform!;
+      _didSetTransform = true;
+    }
   }
 
   void _onTransformStart(TransformStartDetails details) {
@@ -78,18 +84,32 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
 
     return Transform(
       transform: transform,
-      origin: _composerController.center,
-      child: Center(
-        child: TransformGestureDetector(
-          pointerCount: widget.transformationPointerCount,
-          onTransformStart: _onTransformStart,
-          onTransformUpdate: _onTransformUpdate,
-          onTransformEnd: _onTransformEnd,
-          child: LayoutTimeSizeNotifierWidget(
-            onSizeChanged: (size) {
-              if (_size == size) return;
-              _size = size;
-            },
+      child: TransformGestureDetector(
+        pointerCount: widget.transformationPointerCount,
+        onTransformStart: _onTransformStart,
+        onTransformUpdate: _onTransformUpdate,
+        onTransformEnd: _onTransformEnd,
+        child: LayoutTimeSizeNotifierWidget(
+          onSizeChanged: (size) {
+            if (_size == size) return;
+            _size = size;
+
+            if (!_didSetTransform) {
+              _transform = Matrix4.translationValues(
+                _composerController.center.dx - size.width / 2.0,
+                _composerController.center.dy - size.height / 2.0,
+                0,
+              );
+
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {});
+              });
+
+              _didSetTransform = true;
+            }
+          },
+          child: Visibility.maintain(
+            visible: _didSetTransform || _size != null,
             child: child,
           ),
         ),
