@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:story_composer/src/_src.dart';
 
@@ -23,25 +24,33 @@ class StoryTransformationController extends ChangeNotifier {
 
   final Matrix4 _initialTransform;
   var _currentTransform = Matrix4.identity();
-  var _snapTransform = Matrix4.identity();
+  final _translationSnapTransform = Matrix4.identity();
+  // var _rotationSnapTransform = Matrix4.identity();
 
   var _focalPoint = Offset.zero;
   var _focalPointAlignment = Alignment.center;
   var _isInTrashArea = false;
 
   Matrix4 get transform =>
-      _snapTransform * _initialTransform * _currentTransform;
+      _translationSnapTransform *
+      // _rotationSnapTransform *
+      _initialTransform *
+      _currentTransform;
+
+  Matrix4 get _transformWithoutSnap => _initialTransform * _currentTransform;
 
   Offset get focalPoint => _focalPoint;
   Alignment get focalPointAlignment => _focalPointAlignment;
   bool get isInTrashArea => _isInTrashArea;
 
-  HorizontalGuide? _snapHorizontalGuide;
-  VerticalGuide? _snapVerticalGuide;
+  HorizontalSceneGuide? _snapHorizontalGuide;
+  VerticalSceneGuide? _snapVerticalGuide;
 
-  HorizontalGuide? get snapHorizontalGuide => _snapHorizontalGuide;
-  VerticalGuide? get snapVerticalGuide => _snapVerticalGuide;
-  List<Guide> get snapActiveGuides => [
+  // double? _snapAngle;
+
+  HorizontalSceneGuide? get snapHorizontalGuide => _snapHorizontalGuide;
+  VerticalSceneGuide? get snapVerticalGuide => _snapVerticalGuide;
+  List<SceneGuide> get snapActiveGuides => [
         if (_snapHorizontalGuide != null) _snapHorizontalGuide!,
         if (_snapVerticalGuide != null) _snapVerticalGuide!,
       ];
@@ -65,25 +74,29 @@ class StoryTransformationController extends ChangeNotifier {
     _currentTransform = details.transform;
 
     _updateTrashArea(details);
-    _updateSnap(details);
-    _computeSnapTransform();
+    _updateTranslationSnap(details);
+    _computeTranslationSnapTransform();
+
+    // TODO: Rework transformations.
+    // _updateRotationSnap(details);
+    // _computeRotationSnapTransform();
 
     notifyListeners();
   }
 
-  void _computeSnapTransform() {
+  void _computeTranslationSnapTransform() {
     final _aabb = MatrixUtils.transformRect(
-      _initialTransform * _currentTransform,
+      _transformWithoutSnap,
       Offset.zero & untransformedSize,
     );
 
-    final snappedRect = Guides.getSnappedRect(
+    final snappedRect = SceneGuides.getSnappedRect(
       rect: _aabb,
       horizontalGuide: _snapHorizontalGuide,
       verticalGuide: _snapVerticalGuide,
     );
 
-    _snapTransform.setTranslationRaw(
+    _translationSnapTransform.setTranslationRaw(
       -_aabb.topLeft.dx + snappedRect.topLeft.dx,
       -_aabb.topLeft.dy + snappedRect.topLeft.dy,
       0.0,
@@ -104,15 +117,36 @@ class StoryTransformationController extends ChangeNotifier {
     }
   }
 
-  void _updateSnap(TransformUpdateDetails details) {
-    if (!details.hasSinglePointer || _isInTrashArea) {
+  // void _updateRotationSnap(TransformUpdateDetails details) {
+  //   if (details.hasSinglePointer || _isInTrashArea) {
+  //     return;
+  //   }
+
+  //   final q = Quaternion.fromRotation(_transformWithoutSnap.getRotation());
+  //   final angle = q.eulerAngles.yaw;
+
+  //   // We should snap to angles that are close to [pi/2] * n, where n is an
+  //   // integer.
+  //   final snapAngle = (angle / (pi / 2)).round() * pi / 2;
+
+  //   final angleDifference = (angle - snapAngle).abs();
+
+  //   if (angleDifference < 0.3) {
+  //     _snapAngle = snapAngle;
+  //   } else {
+  //     _snapAngle = null;
+  //   }
+  // }
+
+  void _updateTranslationSnap(TransformUpdateDetails details) {
+    if (_isInTrashArea) {
       _snapHorizontalGuide = null;
       _snapVerticalGuide = null;
       return;
     }
 
     final _aabb = MatrixUtils.transformRect(
-      _initialTransform * _currentTransform,
+      _transformWithoutSnap,
       Offset.zero & untransformedSize,
     );
 
@@ -120,29 +154,44 @@ class StoryTransformationController extends ChangeNotifier {
         details.pointerVelocities.first.pixelsPerSecond.distanceSquared;
     final isMovingSlowly = velocity < _kGuideSnapPixelsPerSecondSquared;
 
-    if (details.hasSinglePointer && isMovingSlowly) {
-      final guides = parent.guides.getSortedByDistanceSquaredToRect(_aabb);
+    if (isMovingSlowly) {
+      final guides = parent.guides!.getSortedByDistanceSquaredToRect(_aabb);
 
       final closestHorizontalGuide = guides.firstWhereOrNull(
         (v) =>
-            v.guide is HorizontalGuide &&
+            v.guide is HorizontalSceneGuide &&
             v.distanceSquared < _kGuideSnapDistanceSquared,
       );
 
       final closestVerticalGuide = guides.firstWhereOrNull(
         (v) =>
-            v.guide is VerticalGuide &&
+            v.guide is VerticalSceneGuide &&
             v.distanceSquared < _kGuideSnapDistanceSquared,
       );
 
-      _snapHorizontalGuide = closestHorizontalGuide?.guide as HorizontalGuide?;
-      _snapVerticalGuide = closestVerticalGuide?.guide as VerticalGuide?;
+      var shouldVibrate = false;
+
+      if (closestHorizontalGuide?.guide != _snapHorizontalGuide) {
+        _snapHorizontalGuide =
+            closestHorizontalGuide?.guide as HorizontalSceneGuide?;
+        shouldVibrate = true;
+      }
+
+      if (closestVerticalGuide?.guide != _snapVerticalGuide) {
+        _snapVerticalGuide = closestVerticalGuide?.guide as VerticalSceneGuide?;
+        shouldVibrate = true;
+      }
+
+      if (shouldVibrate) {
+        HapticFeedback.selectionClick();
+      }
     }
 
     if (_snapHorizontalGuide != null) {
       if (_snapHorizontalGuide!.distanceSquaredToRect(_aabb) >
           _kGuideSnapBreakDistanceSquared) {
         _snapHorizontalGuide = null;
+        HapticFeedback.selectionClick();
       }
     }
 
@@ -150,6 +199,7 @@ class StoryTransformationController extends ChangeNotifier {
       if (_snapVerticalGuide!.distanceSquaredToRect(_aabb) >
           _kGuideSnapBreakDistanceSquared) {
         _snapVerticalGuide = null;
+        HapticFeedback.selectionClick();
       }
     }
   }

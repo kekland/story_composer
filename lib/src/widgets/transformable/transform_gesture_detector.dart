@@ -19,6 +19,7 @@ class TransformGestureDetector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    InteractiveViewer;
     return RawGestureDetector(
       gestures: {
         TransformGestureRecognizer:

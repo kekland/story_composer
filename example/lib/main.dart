@@ -56,8 +56,8 @@ class _StoryComposerPageState extends State<StoryComposerPage> {
       StoryOverlayWidget(
         key: const Key('red'),
         child: Container(
-          width: 250.0,
-          height: 250.0,
+          width: 360.0,
+          height: 360.0,
           color: Colors.red,
         ),
       ),

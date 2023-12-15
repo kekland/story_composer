@@ -6,8 +6,8 @@ enum GuideSnapEdge {
   end,
 }
 
-abstract class Guide {
-  const Guide({
+abstract class SceneGuide {
+  const SceneGuide({
     this.snapEdge = GuideSnapEdge.center,
     this.debugLabel,
   });
@@ -49,14 +49,16 @@ abstract class Guide {
   }
 }
 
-class HorizontalGuide extends Guide {
-  const HorizontalGuide({
+class HorizontalSceneGuide extends SceneGuide {
+  const HorizontalSceneGuide({
     required this.dy,
+    required this.viewportDy,
     super.snapEdge,
     super.debugLabel,
   });
 
   final double dy;
+  final double viewportDy;
 
   @override
   Offset snap(Offset offset) {
@@ -69,14 +71,16 @@ class HorizontalGuide extends Guide {
   }
 }
 
-class VerticalGuide extends Guide {
-  const VerticalGuide({
+class VerticalSceneGuide extends SceneGuide {
+  const VerticalSceneGuide({
     required this.dx,
+    required this.viewportDx,
     super.snapEdge,
     super.debugLabel,
   });
 
   final double dx;
+  final double viewportDx;
 
   @override
   Offset snap(Offset offset) {
@@ -89,70 +93,19 @@ class VerticalGuide extends Guide {
   }
 }
 
-typedef GuideResult = ({Guide guide, double distanceSquared});
+typedef SceneGuideResult = ({SceneGuide guide, double distanceSquared});
 
-class Guides {
-  const Guides({
+class SceneGuides {
+  const SceneGuides({
     required this.guides,
   });
 
-  const Guides.empty() : guides = const [];
+  const SceneGuides.empty() : guides = const [];
 
-  factory Guides.fromSizeAndPadding({
-    required Size size,
-    required EdgeInsets padding,
-  }) {
-    return Guides(
-      guides: [
-        // Left
-        VerticalGuide(
-          dx: padding.left,
-          debugLabel: 'left',
-          snapEdge: GuideSnapEdge.start,
-        ),
+  final List<SceneGuide> guides;
 
-        // Right
-        VerticalGuide(
-          dx: size.width - padding.right,
-          debugLabel: 'right',
-          snapEdge: GuideSnapEdge.end,
-        ),
-
-        // Top
-        HorizontalGuide(
-          dy: padding.top,
-          debugLabel: 'top',
-          snapEdge: GuideSnapEdge.start,
-        ),
-
-        // Bottom
-        HorizontalGuide(
-          dy: size.height - padding.bottom,
-          debugLabel: 'bottom',
-          snapEdge: GuideSnapEdge.end,
-        ),
-
-        // Center X
-        VerticalGuide(
-          dx: size.width / 2.0,
-          debugLabel: 'center x',
-          snapEdge: GuideSnapEdge.center,
-        ),
-
-        // Center Y
-        HorizontalGuide(
-          dy: size.height / 2.0,
-          debugLabel: 'center y',
-          snapEdge: GuideSnapEdge.center,
-        ),
-      ],
-    );
-  }
-
-  final List<Guide> guides;
-
-  List<GuideResult> getSortedByDistanceSquaredTo(Offset offset) {
-    final sorted = List<Guide>.from(guides);
+  List<SceneGuideResult> getSortedByDistanceSquaredTo(Offset offset) {
+    final sorted = List<SceneGuide>.from(guides);
 
     sorted.sort((a, b) {
       return a.distanceSquaredTo(offset).compareTo(b.distanceSquaredTo(offset));
@@ -163,8 +116,8 @@ class Guides {
         .toList();
   }
 
-  List<GuideResult> getSortedByDistanceSquaredToRect(Rect rect) {
-    final sorted = List<Guide>.from(guides);
+  List<SceneGuideResult> getSortedByDistanceSquaredToRect(Rect rect) {
+    final sorted = List<SceneGuide>.from(guides);
 
     sorted.sort((a, b) {
       return a
@@ -179,8 +132,8 @@ class Guides {
 
   static Rect getSnappedRect({
     required Rect rect,
-    HorizontalGuide? horizontalGuide,
-    VerticalGuide? verticalGuide,
+    HorizontalSceneGuide? horizontalGuide,
+    VerticalSceneGuide? verticalGuide,
   }) {
     var resultRect = rect;
 
@@ -193,5 +146,150 @@ class Guides {
     }
 
     return resultRect;
+  }
+}
+
+class ViewportGuides {
+  static List<ViewportGuide> fromPadding(EdgeInsets padding) {
+    return [
+      const HorizontalViewportGuide(
+        alignment: Alignment.center,
+        snapEdge: GuideSnapEdge.center,
+      ),
+      const VerticalViewportGuide(
+        alignment: Alignment.center,
+        snapEdge: GuideSnapEdge.center,
+      ),
+      if (padding.top > 0.0)
+        HorizontalViewportGuide(
+          top: padding.top,
+          snapEdge: GuideSnapEdge.start,
+        ),
+      if (padding.bottom > 0.0)
+        HorizontalViewportGuide(
+          bottom: padding.bottom,
+          snapEdge: GuideSnapEdge.end,
+        ),
+      if (padding.left > 0.0)
+        VerticalViewportGuide(
+          left: padding.left,
+          snapEdge: GuideSnapEdge.start,
+        ),
+      if (padding.right > 0.0)
+        VerticalViewportGuide(
+          right: padding.right,
+          snapEdge: GuideSnapEdge.end,
+        ),
+    ];
+  }
+}
+
+abstract class ViewportGuide {
+  const ViewportGuide();
+
+  SceneGuide toSceneGuide(
+    Size sceneSize,
+    Size viewportSize,
+    double scale,
+  );
+}
+
+class HorizontalViewportGuide extends ViewportGuide {
+  const HorizontalViewportGuide({
+    this.top,
+    this.bottom,
+    this.alignment,
+    this.snapEdge = GuideSnapEdge.center,
+  });
+
+  final double? top;
+  final double? bottom;
+  final AlignmentGeometry? alignment;
+  final GuideSnapEdge snapEdge;
+
+  @override
+  SceneGuide toSceneGuide(Size sceneSize, Size viewportSize, double scale) {
+    if (alignment != null) {
+      var y = alignment!.resolve(TextDirection.ltr).y; // From [-1; 1]
+      y = (y + 1.0) / 2.0; // From [0; 1]
+
+      return HorizontalSceneGuide(
+        dy: sceneSize.height * y,
+        viewportDy: viewportSize.height * y,
+        snapEdge: snapEdge,
+      );
+    }
+
+    if (top != null && bottom != null) {
+      throw ArgumentError('Cannot specify both top and bottom');
+    }
+
+    if (top != null) {
+      return HorizontalSceneGuide(
+        dy: top! * scale,
+        viewportDy: top!,
+        snapEdge: snapEdge,
+      );
+    }
+
+    if (bottom != null) {
+      return HorizontalSceneGuide(
+        dy: sceneSize.height - (bottom! * scale),
+        viewportDy: sceneSize.height - bottom!,
+        snapEdge: snapEdge,
+      );
+    }
+
+    throw ArgumentError('Must specify either top, bottom, or alignment');
+  }
+}
+
+class VerticalViewportGuide extends ViewportGuide {
+  const VerticalViewportGuide({
+    this.left,
+    this.right,
+    this.alignment,
+    this.snapEdge = GuideSnapEdge.center,
+  });
+
+  final double? left;
+  final double? right;
+  final AlignmentGeometry? alignment;
+  final GuideSnapEdge snapEdge;
+
+  @override
+  SceneGuide toSceneGuide(Size sceneSize, Size viewportSize, double scale) {
+    if (alignment != null) {
+      var x = alignment!.resolve(TextDirection.ltr).x; // From [-1; 1]
+      x = (x + 1.0) / 2.0; // From [0; 1]
+
+      return VerticalSceneGuide(
+        dx: sceneSize.width * x,
+        viewportDx: viewportSize.width * x,
+        snapEdge: snapEdge,
+      );
+    }
+
+    if (left != null && right != null) {
+      throw ArgumentError('Cannot specify both left and right');
+    }
+
+    if (left != null) {
+      return VerticalSceneGuide(
+        dx: left! * scale,
+        viewportDx: left!,
+        snapEdge: snapEdge,
+      );
+    }
+
+    if (right != null) {
+      return VerticalSceneGuide(
+        dx: sceneSize.width - (right! * scale),
+        viewportDx: sceneSize.width - right!,
+        snapEdge: snapEdge,
+      );
+    }
+
+    throw ArgumentError('Must specify either left, right, or alignment');
   }
 }

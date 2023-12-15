@@ -11,6 +11,7 @@ class StoryComposerCanvas extends StatefulWidget {
     this.trashAreaWidget,
     this.trashAreaAlignment = Alignment.bottomCenter,
     this.guides,
+    this.guidesBuilder = defaultGuidesBuilder,
   });
 
   final Size size;
@@ -19,7 +20,8 @@ class StoryComposerCanvas extends StatefulWidget {
   final Widget? trashAreaWidget;
   final Alignment trashAreaAlignment;
   final void Function(Key)? onWidgetRemoved;
-  final Guides? guides;
+  final List<ViewportGuide>? guides;
+  final GuidesBuilder guidesBuilder;
 
   @override
   State<StoryComposerCanvas> createState() => StoryComposerCanvasState();
@@ -32,11 +34,8 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
     backgroundColor: widget.backgroundColor,
     getChildPaintIndex: getChildIndex,
     onWidgetRemoved: widget.onWidgetRemoved,
-    guides: widget.guides ??
-        Guides.fromSizeAndPadding(
-          size: widget.size,
-          padding: const EdgeInsets.all(32.0),
-        ),
+    viewportGuides:
+        widget.guides ?? ViewportGuides.fromPadding(const EdgeInsets.all(16.0)),
   );
 
   int getChildIndex(BuildContext context) {
@@ -73,21 +72,22 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
                   child: Stack(
                     children: [
                       ...widget.children,
-                      IgnorePointer(
-                        child: ValueListenableBuilder(
-                          valueListenable: controller.activeGuides,
-                          builder: (context, activeGuides, _) => CustomPaint(
-                            painter: DebugGuidesPainter(
-                              guides: activeGuides,
-                            ),
-                            size: controller.size,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
+            ),
+          ),
+          IgnorePointer(
+            child: ValueListenableBuilder(
+              valueListenable: controller.activeGuides,
+              builder: (context, activeGuides, _) {
+                return widget.guidesBuilder(
+                  context,
+                  activeGuides,
+                  controller.guides!.guides,
+                );
+              },
             ),
           ),
           if (widget.trashAreaWidget != null)
@@ -99,9 +99,19 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
       ),
     );
 
-    return InheritedStoryComposerController(
-      controller: controller,
-      child: child,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        controller.setViewportSize(
+          constraints.constrainSizeAndAttemptToPreserveAspectRatio(
+            widget.size,
+          ),
+        );
+
+        return InheritedStoryComposerController(
+          controller: controller,
+          child: child,
+        );
+      },
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -6,7 +8,7 @@ import 'dart:ui' as ui;
 
 class StoryComposerController extends ChangeNotifier {
   StoryComposerController({
-    required this.guides,
+    required this.viewportGuides,
     required this.size,
     required this.getChildPaintIndex,
     required this.onWidgetRemoved,
@@ -14,7 +16,7 @@ class StoryComposerController extends ChangeNotifier {
   });
 
   final Size size;
-  final Guides guides;
+  final List<ViewportGuide> viewportGuides;
   final int Function(BuildContext) getChildPaintIndex;
   final void Function(Key)? onWidgetRemoved;
   final Color? backgroundColor;
@@ -87,8 +89,8 @@ class StoryComposerController extends ChangeNotifier {
     _activeGuidesNotifier.value = [];
   }
 
-  final _activeGuidesNotifier = ValueNotifier<List<Guide>>([]);
-  ValueListenable<List<Guide>> get activeGuides => _activeGuidesNotifier;
+  final _activeGuidesNotifier = ValueNotifier<List<SceneGuide>>([]);
+  ValueListenable<List<SceneGuide>> get activeGuides => _activeGuidesNotifier;
 
   void _onActiveTransformationChanged() {
     if (!listEquals(
@@ -133,5 +135,37 @@ class StoryComposerController extends ChangeNotifier {
       images,
       backgroundColor: backgroundColor,
     );
+  }
+
+  SceneGuides? _sceneGuides;
+  SceneGuides? get guides => _sceneGuides;
+
+  late Size _viewportSize;
+  double _scale = 1.0;
+
+  void setViewportSize(Size size) {
+    _viewportSize = size;
+
+    final scaleX = this.size.width / _viewportSize.width;
+    final scaleY = this.size.height / _viewportSize.height;
+
+    final scale = min(scaleX, scaleY);
+
+    if (_scale != scale) {
+      _scale = scale;
+      _computeCanvasSpaceGuides();
+    }
+  }
+
+  void _computeCanvasSpaceGuides() {
+    _sceneGuides = SceneGuides(
+      guides: viewportGuides
+          .map((g) => g.toSceneGuide(size, _viewportSize, _scale))
+          .toList(),
+    );
+  }
+
+  Offset toScene(Offset offset) {
+    return offset * _scale;
   }
 }
