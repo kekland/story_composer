@@ -2,15 +2,28 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 
-Future<ui.Image> renderRepaintBoundary(RenderRepaintBoundary renderObject) {
-  final image = renderObject.toImage();
+Future<ui.Image> renderRepaintBoundary(
+  RenderRepaintBoundary renderObject, {
+  Size? size,
+}) {
+  var pixelRatio = 1.0;
+
+  if(size != null) {
+    pixelRatio = size.width / renderObject.size.width;
+  }
+
+  final image = renderObject.toImage(pixelRatio: pixelRatio);
   return image;
 }
 
 Future<List<ui.Image>> renderRepaintBoundaries(
-  List<RenderRepaintBoundary> renderObjects,
-) async {
-  final futures = renderObjects.map(renderRepaintBoundary);
+  List<RenderRepaintBoundary> renderObjects, {
+  Size? size,
+}) async {
+  final futures = renderObjects.map(
+    (v) => renderRepaintBoundary(v, size: size),
+  );
+
   final images = await Future.wait(futures);
 
   return images;

@@ -20,7 +20,7 @@ class StoryComposerCanvas extends StatefulWidget {
   final Widget? trashAreaWidget;
   final Alignment trashAreaAlignment;
   final void Function(Key)? onWidgetRemoved;
-  final List<ViewportGuide>? guides;
+  final List<PositionedSceneGuide>? guides;
   final GuidesBuilder guidesBuilder;
 
   @override
@@ -28,14 +28,13 @@ class StoryComposerCanvas extends StatefulWidget {
 }
 
 class StoryComposerCanvasState extends State<StoryComposerCanvas> {
-  final _canvasKey = GlobalKey();
   late final controller = StoryComposerController(
     size: widget.size,
     backgroundColor: widget.backgroundColor,
     getChildPaintIndex: getChildIndex,
     onWidgetRemoved: widget.onWidgetRemoved,
-    viewportGuides:
-        widget.guides ?? ViewportGuides.fromPadding(const EdgeInsets.all(16.0)),
+    positionedGuides:
+        widget.guides ?? SceneGuides.fromPadding(const EdgeInsets.all(16.0)),
   );
 
   int getChildIndex(BuildContext context) {
@@ -61,19 +60,14 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
       aspectRatio: widget.size.aspectRatio,
       child: Stack(
         children: [
-          FittedBox(
-            fit: BoxFit.contain,
-            child: ClipRect(
-              child: SizedBox.fromSize(
-                key: _canvasKey,
-                size: widget.size,
-                child: ColoredBox(
-                  color: widget.backgroundColor,
-                  child: Stack(
-                    children: [
-                      ...widget.children,
-                    ],
-                  ),
+          ClipRect(
+            child: SizedBox.expand(
+              child: ColoredBox(
+                color: widget.backgroundColor,
+                child: Stack(
+                  children: [
+                    ...widget.children,
+                  ],
                 ),
               ),
             ),
@@ -85,7 +79,7 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
                 return widget.guidesBuilder(
                   context,
                   activeGuides,
-                  controller.guides!.guides,
+                  controller.sceneGuides.guides,
                 );
               },
             ),
@@ -102,9 +96,7 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
     return LayoutBuilder(
       builder: (context, constraints) {
         controller.setViewportSize(
-          constraints.constrainSizeAndAttemptToPreserveAspectRatio(
-            widget.size,
-          ),
+          constraints.constrainSizeAndAttemptToPreserveAspectRatio(widget.size),
         );
 
         return InheritedStoryComposerController(

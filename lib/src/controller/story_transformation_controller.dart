@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:story_composer/src/_src.dart';
 
-const _kGuideSnapPixelsPerSecondSquared = 3000.0;
-const _kGuideSnapDistanceSquared = 100.0;
-const _kGuideSnapBreakDistanceSquared = 400.0;
+const _kGuideSnapPixelsPerSecondSquared = 2000.0;
+const _kGuideSnapDistanceSquared = 60.0;
+const _kGuideSnapBreakDistanceSquared = 200.0;
 
 class StoryTransformationController extends ChangeNotifier {
   StoryTransformationController({
@@ -155,7 +155,7 @@ class StoryTransformationController extends ChangeNotifier {
     final isMovingSlowly = velocity < _kGuideSnapPixelsPerSecondSquared;
 
     if (isMovingSlowly) {
-      final guides = parent.guides!.getSortedByDistanceSquaredToRect(_aabb);
+      final guides = parent.sceneGuides.getSortedByDistanceSquaredToRect(_aabb);
 
       final closestHorizontalGuide = guides.firstWhereOrNull(
         (v) =>

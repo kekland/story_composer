@@ -104,14 +104,12 @@ class _StoryGuideWidgetState extends State<_StoryGuideWidget>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        return LayoutBuilder(
-          builder: (context, constraints) => CustomPaint(
-            size: constraints.biggest,
-            painter: _GuidePainter(
-              guide: widget.guide,
-              color: widget.color.withOpacity(_animation.value),
-              thickness: widget.thickness,
-            ),
+        return CustomPaint(
+          size: Size.infinite,
+          painter: _GuidePainter(
+            guide: widget.guide,
+            color: widget.color.withOpacity(_animation.value),
+            thickness: widget.thickness,
           ),
         );
       },
@@ -137,22 +135,20 @@ class _GuidePainter extends CustomPainter {
       ..strokeWidth = thickness
       ..style = PaintingStyle.stroke;
 
-    print(guide);
-
     if (guide is HorizontalSceneGuide) {
       final _guide = guide as HorizontalSceneGuide;
 
       canvas.drawLine(
-        Offset(0, _guide.viewportDy),
-        Offset(size.width, _guide.viewportDy),
+        Offset(0, _guide.dy),
+        Offset(size.width, _guide.dy),
         paint,
       );
     } else if (guide is VerticalSceneGuide) {
       final _guide = guide as VerticalSceneGuide;
 
       canvas.drawLine(
-        Offset(_guide.viewportDx, 0),
-        Offset(_guide.viewportDx, size.height),
+        Offset(_guide.dx, 0),
+        Offset(_guide.dx, size.height),
         paint,
       );
     }

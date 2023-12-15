@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -8,7 +6,7 @@ import 'dart:ui' as ui;
 
 class StoryComposerController extends ChangeNotifier {
   StoryComposerController({
-    required this.viewportGuides,
+    required this.positionedGuides,
     required this.size,
     required this.getChildPaintIndex,
     required this.onWidgetRemoved,
@@ -16,12 +14,12 @@ class StoryComposerController extends ChangeNotifier {
   });
 
   final Size size;
-  final List<ViewportGuide> viewportGuides;
+  final List<PositionedSceneGuide> positionedGuides;
   final int Function(BuildContext) getChildPaintIndex;
   final void Function(Key)? onWidgetRemoved;
   final Color? backgroundColor;
 
-  Offset get center => size.center(Offset.zero);
+  Offset get center => _viewportSize.center(Offset.zero);
 
   static StoryComposerController of(BuildContext context) {
     return context
@@ -129,6 +127,7 @@ class StoryComposerController extends ChangeNotifier {
           .map((v) =>
               v.currentContext!.findRenderObject() as RenderRepaintBoundary)
           .toList(),
+      size: size,
     );
 
     return composeLayeredImages(
@@ -137,35 +136,20 @@ class StoryComposerController extends ChangeNotifier {
     );
   }
 
-  SceneGuides? _sceneGuides;
-  SceneGuides? get guides => _sceneGuides;
-
   late Size _viewportSize;
-  double _scale = 1.0;
+
+  late SceneGuides _sceneGuides;
+  SceneGuides get sceneGuides => _sceneGuides;
 
   void setViewportSize(Size size) {
     _viewportSize = size;
-
-    final scaleX = this.size.width / _viewportSize.width;
-    final scaleY = this.size.height / _viewportSize.height;
-
-    final scale = min(scaleX, scaleY);
-
-    if (_scale != scale) {
-      _scale = scale;
-      _computeCanvasSpaceGuides();
-    }
+    _computeSceneGuides();
   }
 
-  void _computeCanvasSpaceGuides() {
+  void _computeSceneGuides() {
     _sceneGuides = SceneGuides(
-      guides: viewportGuides
-          .map((g) => g.toSceneGuide(size, _viewportSize, _scale))
-          .toList(),
+      guides:
+          positionedGuides.map((v) => v.toSceneGuide(_viewportSize)).toList(),
     );
-  }
-
-  Offset toScene(Offset offset) {
-    return offset * _scale;
   }
 }
