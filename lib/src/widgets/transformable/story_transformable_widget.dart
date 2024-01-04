@@ -27,13 +27,17 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
   var _transform = Matrix4.identity();
   var _didSetTransform = false;
 
-  late final StoryComposerController _composerController;
+  StoryComposerController? _composerController;
   StoryTransformationController? _transformationController;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _composerController = StoryComposerController.of(context);
+
+    if (_composerController == null) {
+      _composerController = StoryComposerController.of(context);
+      _composerController!.addListener(_onComposerControllerChanged);
+    }
 
     if (widget.initialTransform != null) {
       _transform = widget.initialTransform!;
@@ -41,8 +45,18 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
     }
   }
 
+  void _onComposerControllerChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _composerController?.removeListener(_onComposerControllerChanged);
+    super.dispose();
+  }
+
   void _onTransformStart(TransformStartDetails details) {
-    _transformationController = _composerController.startTransformation(
+    _transformationController = _composerController?.startTransformation(
       key: widget.key!,
       initialTransform: _transform,
       untransformedSize: _size!,
@@ -58,7 +72,7 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
   }
 
   void _onTransformEnd(TransformEndDetails details) {
-    _composerController.endTransformation();
+    _composerController?.endTransformation();
 
     _transform = _transformationController!.transform;
 
@@ -82,37 +96,41 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
 
     final transform = _transformationController?.transform ?? _transform;
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: Transform(
-        transform: transform,
-        child: TransformGestureDetector(
-          pointerCount: widget.transformationPointerCount,
-          onTransformStart: _onTransformStart,
-          onTransformUpdate: _onTransformUpdate,
-          onTransformEnd: _onTransformEnd,
-          child: LayoutTimeSizeNotifierWidget(
-            onSizeChanged: (size) {
-              if (_size == size) return;
-              _size = size;
-    
-              if (!_didSetTransform) {
-                _transform = Matrix4.translationValues(
-                  _composerController.center.dx - size.width / 2.0,
-                  _composerController.center.dy - size.height / 2.0,
-                  0,
-                );
-    
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  setState(() {});
-                });
-    
-                _didSetTransform = true;
-              }
-            },
-            child: Visibility.maintain(
-              visible: _didSetTransform || _size != null,
-              child: child,
+    return IgnorePointer(
+      ignoring: _transformationController !=
+          _composerController?.activeTransformation,
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Transform(
+          transform: transform,
+          child: TransformGestureDetector(
+            pointerCount: widget.transformationPointerCount,
+            onTransformStart: _onTransformStart,
+            onTransformUpdate: _onTransformUpdate,
+            onTransformEnd: _onTransformEnd,
+            child: LayoutTimeSizeNotifierWidget(
+              onSizeChanged: (size) {
+                if (_size == size) return;
+                _size = size;
+
+                if (!_didSetTransform) {
+                  _transform = Matrix4.translationValues(
+                    _composerController!.center.dx - size.width / 2.0,
+                    _composerController!.center.dy - size.height / 2.0,
+                    0,
+                  );
+
+                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                    setState(() {});
+                  });
+
+                  _didSetTransform = true;
+                }
+              },
+              child: Visibility.maintain(
+                visible: _didSetTransform || _size != null,
+                child: child,
+              ),
             ),
           ),
         ),

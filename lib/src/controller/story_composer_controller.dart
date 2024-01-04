@@ -41,6 +41,8 @@ class StoryComposerController extends ChangeNotifier {
   }
 
   StoryTransformationController? _activeTransformation;
+  StoryTransformationController? get activeTransformation =>
+      _activeTransformation;
 
   StoryTransformationController startTransformation({
     required Key key,
@@ -65,6 +67,8 @@ class StoryComposerController extends ChangeNotifier {
     result.addListener(_onActiveTransformationChanged);
     _activeTransformation = result;
 
+    notifyListeners();
+
     return result;
   }
 
@@ -85,6 +89,8 @@ class StoryComposerController extends ChangeNotifier {
 
     trashAreaState?.hideTrashArea();
     _activeGuidesNotifier.value = [];
+
+    notifyListeners();
   }
 
   final _activeGuidesNotifier = ValueNotifier<List<SceneGuide>>([]);

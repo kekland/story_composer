@@ -17,7 +17,7 @@ class StoryOverlayWidget extends StatelessWidget {
       child: StoryTransformableWidget(
         key: key!,
         initialTransform: initialTransform,
-        isPersistent: true,
+        isPersistent: false,
         transformationPointerCount: 1,
         child: child,
       ),

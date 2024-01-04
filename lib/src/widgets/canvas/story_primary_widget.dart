@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:story_composer/src/_src.dart';
 
@@ -13,6 +14,7 @@ class StoryPrimaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrintGestureArenaDiagnostics = true;
     return StoryRenderableWidget(
       child: StoryTransformableWidget(
         key: key!,

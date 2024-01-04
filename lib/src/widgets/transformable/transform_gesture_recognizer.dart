@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
+const _kTransformSlop = 6.0;
+
 class LineSegment {
   LineSegment(this.start, this.end);
 
@@ -103,10 +105,24 @@ class TransformGestureRecognizer extends OneSequenceGestureRecognizer {
     if (!didChangeConfiguration || _reconfigure(event.pointer)) {
       _advanceStateMachine(shouldStartIfAccepted, event);
     }
+
+    stopTrackingIfPointerNoLongerDown(event);
   }
 
   @override
-  void didStopTrackingLastPointer(int pointer) {}
+  void didStopTrackingLastPointer(int pointer) {
+    switch (_state) {
+      case _TransformState.possible:
+        resolve(GestureDisposition.rejected);
+      case _TransformState.ready:
+        assert(false); // We should have not seen a pointer yet
+      case _TransformState.accepted:
+        break;
+      case _TransformState.started:
+        assert(false); // We should be in the accepted state when user is done
+    }
+    _state = _TransformState.ready;
+  }
 
   @override
   bool isPointerPanZoomAllowed(PointerPanZoomStartEvent event) => false;
@@ -212,9 +228,16 @@ class TransformGestureRecognizer extends OneSequenceGestureRecognizer {
       _state = _TransformState.possible;
     }
 
+    ScaleGestureRecognizer;
+
     if (_state == _TransformState.possible) {
-      if (_pointerCount >= requiredPointerCount) {
-        resolve(GestureDisposition.accepted);
+      if (_initialSegment != null && _currentSegment != null) {
+        final offset = _initialSegment!.start - _currentSegment!.start;
+        final delta = offset.distance;
+
+        if (delta > _kTransformSlop && _pointerCount >= requiredPointerCount) {
+          resolve(GestureDisposition.accepted);
+        }
       }
     } else if (_state.index >= _TransformState.accepted.index) {
       resolve(GestureDisposition.accepted);
