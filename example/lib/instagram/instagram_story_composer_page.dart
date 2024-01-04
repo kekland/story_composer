@@ -10,7 +10,12 @@ import 'package:story_composer/story_composer.dart';
 final storyComposerPageRouteObserver = RouteObserver<ModalRoute<void>>();
 
 class InstagramStoryComposerPage extends StatefulWidget {
-  const InstagramStoryComposerPage({super.key});
+  const InstagramStoryComposerPage({
+    super.key,
+    required this.imageProvider,
+  });
+
+  final ImageProvider imageProvider;
 
   @override
   State<InstagramStoryComposerPage> createState() =>
@@ -35,15 +40,21 @@ class _InstagramStoryComposerPageState
 
         return route.didPop(result);
       },
-      pages: const [
-        MaterialPage(child: _StoryComposerMainPage()),
+      pages: [
+        MaterialPage(
+          child: _StoryComposerMainPage(
+            imageProvider: widget.imageProvider,
+          ),
+        ),
       ],
     );
   }
 }
 
 class _StoryComposerMainPage extends StatefulWidget {
-  const _StoryComposerMainPage({super.key});
+  const _StoryComposerMainPage({super.key, required this.imageProvider});
+
+  final ImageProvider imageProvider;
 
   @override
   State<_StoryComposerMainPage> createState() => _StoryComposerMainPageState();
@@ -111,8 +122,8 @@ class _StoryComposerMainPageState extends State<_StoryComposerMainPage>
               child: SizedBox(
                 width: 1080.0,
                 height: 1920.0,
-                child: Image.network(
-                  'https://test-photos-qklwjen.s3.eu-west-3.amazonaws.com/image11.jpg',
+                child: Image(
+                  image: widget.imageProvider,
                   fit: BoxFit.cover,
                 ),
               ),

@@ -1,3 +1,4 @@
+import 'package:example/camera_page/camera_page.dart';
 import 'package:example/instagram/instagram_story_composer_page.dart';
 import 'package:example/main_page/story_circle.dart';
 import 'package:example/main_page/story_page.dart';
@@ -43,6 +44,34 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   final _stories = <ui.Image>[];
 
+  Future<void> _onCreate() async {
+    final provider = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const CameraPage(),
+      ),
+    );
+
+    if (provider is! ImageProvider) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    final story = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => InstagramStoryComposerPage(
+          imageProvider: provider,
+        ),
+      ),
+    );
+
+    if (story != null) {
+      setState(() {
+        _stories.add(story);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,20 +88,7 @@ class _MainPageState extends State<MainPage> {
               children: <Widget>[
                 StoryCircle(
                   hasBorder: false,
-                  onTap: () async {
-                    final story = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const InstagramStoryComposerPage(),
-                      ),
-                    );
-
-                    if (story != null) {
-                      setState(() {
-                        _stories.add(story);
-                      });
-                    }
-                  },
+                  onTap: _onCreate,
                   child: const Icon(
                     Icons.add_rounded,
                     color: Colors.black,
