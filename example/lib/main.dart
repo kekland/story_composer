@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter_simulator/flutter_simulator.dart';
+import 'package:story_composer/story_composer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,13 +46,13 @@ class _MainPageState extends State<MainPage> {
   final _stories = <ui.Image>[];
 
   Future<void> _onCreate() async {
-    final provider = await Navigator.of(context).push(
+    final primaryContent = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const CameraPage(),
       ),
     );
 
-    if (provider is! ImageProvider) {
+    if (primaryContent is! StoryPrimaryContent) {
       return;
     }
 
@@ -60,7 +61,7 @@ class _MainPageState extends State<MainPage> {
     final story = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => InstagramStoryComposerPage(
-          imageProvider: provider,
+          primaryContent: primaryContent,
         ),
       ),
     );

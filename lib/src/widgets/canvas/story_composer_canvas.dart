@@ -4,6 +4,7 @@ import 'package:story_composer/src/_src.dart';
 class StoryComposerCanvas extends StatefulWidget {
   const StoryComposerCanvas({
     super.key,
+    required this.primaryContent,
     required this.size,
     required this.children,
     this.onWidgetRemoved,
@@ -12,7 +13,12 @@ class StoryComposerCanvas extends StatefulWidget {
     this.trashAreaAlignment = Alignment.bottomCenter,
     this.guides,
     this.guidesBuilder = defaultGuidesBuilder,
+    this.primaryContentBuilder = defaultPrimaryContentBuilder,
   });
+
+  final StoryPrimaryContent primaryContent;
+  final Widget Function(BuildContext, StoryPrimaryContent)
+      primaryContentBuilder;
 
   final Size size;
   final List<Widget> children;
@@ -66,6 +72,10 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
                 color: widget.backgroundColor,
                 child: Stack(
                   children: [
+                    widget.primaryContentBuilder(
+                      context,
+                      widget.primaryContent,
+                    ),
                     ...widget.children,
                   ],
                 ),

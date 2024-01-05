@@ -12,10 +12,10 @@ final storyComposerPageRouteObserver = RouteObserver<ModalRoute<void>>();
 class InstagramStoryComposerPage extends StatefulWidget {
   const InstagramStoryComposerPage({
     super.key,
-    required this.imageProvider,
+    required this.primaryContent,
   });
 
-  final ImageProvider imageProvider;
+  final StoryPrimaryContent primaryContent;
 
   @override
   State<InstagramStoryComposerPage> createState() =>
@@ -43,7 +43,7 @@ class _InstagramStoryComposerPageState
       pages: [
         MaterialPage(
           child: _StoryComposerMainPage(
-            imageProvider: widget.imageProvider,
+            primaryContent: widget.primaryContent,
           ),
         ),
       ],
@@ -52,9 +52,9 @@ class _InstagramStoryComposerPageState
 }
 
 class _StoryComposerMainPage extends StatefulWidget {
-  const _StoryComposerMainPage({super.key, required this.imageProvider});
+  const _StoryComposerMainPage({super.key, required this.primaryContent});
 
-  final ImageProvider imageProvider;
+  final StoryPrimaryContent primaryContent;
 
   @override
   State<_StoryComposerMainPage> createState() => _StoryComposerMainPageState();
@@ -97,6 +97,7 @@ class _StoryComposerMainPageState extends State<_StoryComposerMainPage>
         borderRadius: BorderRadius.circular(24.0),
         child: StoryComposerCanvas(
           key: _composerKey,
+          primaryContent: widget.primaryContent,
           size: const Size(1080, 1920),
           backgroundColor: Colors.black,
           trashAreaWidget: const Padding(
@@ -117,17 +118,6 @@ class _StoryComposerMainPageState extends State<_StoryComposerMainPage>
             ),
           ),
           children: [
-            StoryPrimaryWidget(
-              key: const Key('primary'),
-              child: SizedBox(
-                width: 1080.0,
-                height: 1920.0,
-                child: Image(
-                  image: widget.imageProvider,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
             ..._children,
           ],
         ),

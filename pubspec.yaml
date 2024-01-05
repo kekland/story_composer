@@ -11,8 +11,10 @@ dependencies:
     sdk: flutter
 
   collection: ^1.17.2
+  ffmpeg_kit_flutter: ^6.0.3
   uuid: ^4.2.1
   vector_math: ^2.1.4
+  video_player: ^2.8.2
 
 
 dev_dependencies:

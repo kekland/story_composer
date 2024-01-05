@@ -1,8 +1,16 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:example/instagram/instagram_story_composer_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:story_composer/story_composer.dart';
+
+enum _CaptureType {
+  unknown,
+  image,
+  video,
+  loading,
+}
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -23,8 +31,6 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _initialize() async {
     _cameras = await availableCameras();
-    print('ayo');
-    print(_cameras);
     await _setController(_cameras!.first);
   }
 
@@ -53,17 +59,69 @@ class _CameraPageState extends State<CameraPage> {
     super.dispose();
   }
 
-  Future<void> _onCapture() async {
-    final picture = await _controller?.takePicture();
-    final provider = FileImage(File(picture!.path));
+  static const _videoCaptureDelay = Duration(milliseconds: 350);
+  static const _videoCaptureDuration = Duration(seconds: 15);
+
+  _CaptureType? _captureType;
+
+  Future<void> _onCaptureStart() async {
+    _captureType = _CaptureType.unknown;
+    setState(() {});
+
+    Future.delayed(_videoCaptureDelay, () async {
+      if (_captureType != _CaptureType.unknown) {
+        return;
+      }
+
+      return _onVideoCaptureStart();
+    });
+  }
+
+  Future<void> _onCaptureEnd() async {
+    final StoryPrimaryContent primaryContent;
+
+    if (_captureType == _CaptureType.video) {
+      primaryContent = await _onVideoCaptureEnd();
+    } else {
+      primaryContent = await _onImageCaptureEnd();
+    }
 
     if (!mounted) return;
 
-    await precacheImage(provider, context);
+    _captureType = null;
+    setState(() {});
+
+    await primaryContent.precache(context);
 
     if (!mounted) return;
+    Navigator.pop(context, primaryContent);
+  }
 
-    Navigator.pop(context, provider);
+  Future<void> _onVideoCaptureStart() async {
+    _captureType = _CaptureType.video;
+    setState(() {});
+
+    await _controller!.startVideoRecording();
+  }
+
+  Future<StoryPrimaryContent> _onVideoCaptureEnd() async {
+    _captureType = _CaptureType.loading;
+    setState(() {});
+
+    final xFile = await _controller!.stopVideoRecording();
+    final file = File(xFile.path);
+
+    return VideoStoryPrimaryContent(file);
+  }
+
+  Future<StoryPrimaryContent> _onImageCaptureEnd() async {
+    _captureType = _CaptureType.image;
+    setState(() {});
+
+    final file = await _controller?.takePicture();
+    final provider = FileImage(File(file!.path));
+
+    return ImageStoryPrimaryContent(provider);
   }
 
   @override
@@ -95,7 +153,9 @@ class _CameraPageState extends State<CameraPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: _CaptureButton(
-                      onCapture: _onCapture,
+                      captureType: _captureType,
+                      onCaptureStart: _onCaptureStart,
+                      onCaptureEnd: _onCaptureEnd,
                     ),
                   ),
                 ),
@@ -174,29 +234,115 @@ class _TopButtonsRow extends StatelessWidget {
 }
 
 class _CaptureButton extends StatefulWidget {
-  const _CaptureButton({super.key, required this.onCapture});
+  const _CaptureButton({
+    super.key,
+    required this.captureType,
+    required this.onCaptureStart,
+    required this.onCaptureEnd,
+  });
 
-  final Future<void> Function() onCapture;
+  final _CaptureType? captureType;
+  final VoidCallback onCaptureStart;
+  final VoidCallback onCaptureEnd;
 
   @override
   State<_CaptureButton> createState() => _CaptureButtonState();
 }
 
-class _CaptureButtonState extends State<_CaptureButton> {
-  bool _isCapturing = false;
+class _CaptureButtonState extends State<_CaptureButton>
+    with SingleTickerProviderStateMixin {
+  late final Ticker _ticker;
 
-  Future<void> _capture() async {
-    setState(() {
-      _isCapturing = true;
-    });
+  @override
+  void initState() {
+    super.initState();
 
-    await widget.onCapture();
+    _ticker = createTicker(_onTick);
+  }
 
-    if (!mounted) return;
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
 
-    setState(() {
-      _isCapturing = false;
-    });
+  @override
+  void didUpdateWidget(covariant _CaptureButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.captureType != widget.captureType) {
+      if (widget.captureType == _CaptureType.video) {
+        _onVideoCaptureStart();
+      } else {
+        _onVideoCaptureEnd();
+      }
+    }
+  }
+
+  void _onVideoCaptureStart() {
+    _ticker.start();
+    _currentCaptureDuration = Duration.zero;
+
+    setState(() {});
+  }
+
+  void _onVideoCaptureEnd() {
+    _ticker.stop();
+    _currentCaptureDuration = null;
+
+    setState(() {});
+  }
+
+  Duration? _currentCaptureDuration;
+
+  void _onTick(Duration duration) {
+    _currentCaptureDuration = duration;
+    setState(() {});
+  }
+
+  Widget _buildCaptureIndicator(BuildContext context) {
+    if (widget.captureType == null ||
+        widget.captureType == _CaptureType.unknown) {
+      return Container(
+        key: const ValueKey('idle'),
+        width: 64.0,
+        height: 64.0,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2.0,
+          ),
+        ),
+      );
+    }
+
+    if (widget.captureType == _CaptureType.image ||
+        widget.captureType == _CaptureType.loading) {
+      return const SizedBox.square(
+        dimension: 64.0,
+        child: CircularProgressIndicator(
+          key: ValueKey('image'),
+          color: Colors.white,
+          strokeWidth: 2.0,
+        ),
+      );
+    }
+
+    if (widget.captureType == _CaptureType.video) {
+      return SizedBox.square(
+        dimension: 64.0,
+        child: CircularProgressIndicator(
+          key: const ValueKey('video'),
+          color: Colors.white,
+          strokeWidth: 2.0,
+          value: _currentCaptureDuration!.inMilliseconds /
+              const Duration(seconds: 15).inMilliseconds,
+        ),
+      );
+    }
+
+    throw UnimplementedError();
   }
 
   @override
@@ -214,34 +360,20 @@ class _CaptureButtonState extends State<_CaptureButton> {
             type: MaterialType.transparency,
             child: InkWell(
               borderRadius: BorderRadius.circular(32.0),
-              onTap: _capture,
+              onTapDown: (_) => widget.onCaptureStart(),
+              onTapUp: (_) => widget.onCaptureEnd(),
             ),
           ),
         ),
         Transform.scale(
           scale: 1.2,
           child: IgnorePointer(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _isCapturing
-                  ? const SizedBox.square(
-                      dimension: 64.0,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.0,
-                      ),
-                    )
-                  : Container(
-                      width: 64.0,
-                      height: 64.0,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
+            child: SizedBox.square(
+              dimension: 64.0,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _buildCaptureIndicator(context),
+              ),
             ),
           ),
         ),
