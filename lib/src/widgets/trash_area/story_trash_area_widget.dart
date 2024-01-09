@@ -32,6 +32,7 @@ class StoryTrashAreaWidgetState extends State<StoryTrashAreaWidget>
             child: Icon(
               Icons.delete,
               size: widget.size / 2.0,
+              color: Colors.white,
             ),
           ),
         ),

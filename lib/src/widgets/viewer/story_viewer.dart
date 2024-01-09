@@ -2,26 +2,29 @@ import 'package:flutter/widgets.dart';
 import 'package:story_composer/src/model/story_data.dart';
 import 'package:video_player/video_player.dart';
 
-class StoryViewer extends StatefulWidget {
-  const StoryViewer({
+class StoryViewerWidget extends StatefulWidget {
+  const StoryViewerWidget({
     super.key,
     required this.data,
+    this.fit,
     this.thumbnailOnly = false,
   });
 
-  const StoryViewer.thumbnail({
+  const StoryViewerWidget.thumbnail({
     super.key,
     required this.data,
+    this.fit,
   }) : thumbnailOnly = true;
 
   final StoryData data;
   final bool thumbnailOnly;
+  final BoxFit? fit;
 
   @override
-  State<StoryViewer> createState() => _StoryViewerState();
+  State<StoryViewerWidget> createState() => _StoryViewerWidgetState();
 }
 
-class _StoryViewerState extends State<StoryViewer> {
+class _StoryViewerWidgetState extends State<StoryViewerWidget> {
   @override
   void initState() {
     super.initState();
@@ -46,7 +49,7 @@ class _StoryViewerState extends State<StoryViewer> {
     setState(() {});
   }
 
-  Future<void> _disposeVideoStory() async {
+  Future<void> _closeVideoStory() async {
     final data = widget.data as VideoStoryData;
 
     await data.controller.pause();
@@ -55,7 +58,7 @@ class _StoryViewerState extends State<StoryViewer> {
 
   @override
   void dispose() {
-    _disposeVideoStory();
+    _closeVideoStory();
     super.dispose();
   }
 
@@ -64,13 +67,24 @@ class _StoryViewerState extends State<StoryViewer> {
     Widget child;
 
     if (widget.thumbnailOnly) {
-      child = Image(image: widget.data.thumbnail);
+      child = Image(
+        image: widget.data.thumbnail,
+        fit: widget.fit,
+      );
     } else if (widget.data is ImageStoryData) {
       final data = widget.data as ImageStoryData;
-      child = Image(image: data.imageProvider);
+      child = Image(
+        image: data.imageProvider,
+        fit: widget.fit,
+      );
     } else if (widget.data is VideoStoryData) {
       final data = widget.data as VideoStoryData;
-      child = VideoPlayer(data.controller);
+      child = FittedBox(
+        fit: widget.fit ?? BoxFit.contain,
+        child: VideoPlayer(
+          data.controller,
+        ),
+      );
     } else {
       throw Exception('Unknown story data type');
     }

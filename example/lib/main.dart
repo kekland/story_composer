@@ -7,7 +7,6 @@ import 'package:example/main_page/story_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 
 import 'package:flutter_simulator/flutter_simulator.dart';
 import 'package:story_composer/story_composer.dart';
@@ -28,7 +27,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
+          brightness: Brightness.light,
         ),
         useMaterial3: true,
       ),
@@ -120,6 +119,7 @@ class _MainPageState extends State<MainPage> {
                 StoryCircle(
                   hasBorder: false,
                   onTap: _onCreate,
+                  backgroundColor: Colors.grey.shade200,
                   child: const Icon(
                     Icons.add_rounded,
                     color: Colors.black,

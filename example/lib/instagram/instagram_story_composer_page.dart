@@ -5,6 +5,7 @@ import 'package:example/instagram/text_editing_dialog/dialog_route_with_hero.dar
 import 'package:example/instagram/text_editing_dialog/text_editing_dialog.dart';
 import 'package:example/instagram/widgets/icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:story_composer/story_composer.dart';
 
 final storyComposerPageRouteObserver = RouteObserver<ModalRoute<void>>();
@@ -178,40 +179,43 @@ class _StoryComposerMainPageState extends State<_StoryComposerMainPage>
       ),
     ];
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Column(
-            children: [
-              Flexible(
-                child: Stack(
-                  children: [
-                    ...children,
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  opacity: _isTopmostRoute ? 1.0 : 0.0,
-                  child: _BottomButtonsRow(
-                    onSubmit: () async {
-                      final image =
-                          await _composerKey.currentState!.controller.render();
-
-                      if (mounted) {
-                        Navigator.pop(context, image);
-                      }
-                    },
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        resizeToAvoidBottomInset: false,
+        body: SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Column(
+              children: [
+                Flexible(
+                  child: Stack(
+                    children: [
+                      ...children,
+                    ],
                   ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    opacity: _isTopmostRoute ? 1.0 : 0.0,
+                    child: _BottomButtonsRow(
+                      onSubmit: () async {
+                        final image =
+                            await _composerKey.currentState!.controller.render();
+    
+                        if (mounted) {
+                          Navigator.pop(context, image);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
