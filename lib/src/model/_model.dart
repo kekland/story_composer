@@ -1,2 +1,3 @@
 export 'guide.dart';
-export 'primary_content.dart';
+export 'story_data.dart';
+export 'story_primary_content.dart';

@@ -8,7 +8,7 @@ Future<ui.Image> renderRepaintBoundary(
 }) {
   var pixelRatio = 1.0;
 
-  if(size != null) {
+  if (size != null) {
     pixelRatio = size.width / renderObject.size.width;
   }
 
@@ -31,13 +31,25 @@ Future<List<ui.Image>> renderRepaintBoundaries(
 
 Future<ui.Image> composeLayeredImages(
   List<ui.Image> images, {
-  Color? backgroundColor,
+  required Size size,
+  Decoration? backgroundDecoration,
 }) {
+  final width = size.width.toInt();
+  final height = size.height.toInt();
+
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
 
-  if (backgroundColor != null) {
-    canvas.drawColor(backgroundColor, BlendMode.src);
+  if (backgroundDecoration != null) {
+    final painter = backgroundDecoration.createBoxPainter();
+
+    painter.paint(
+      canvas,
+      Offset.zero,
+      ImageConfiguration(size: size),
+    );
+
+    painter.dispose();
   }
 
   for (final image in images) {
@@ -45,10 +57,7 @@ Future<ui.Image> composeLayeredImages(
   }
 
   final picture = recorder.endRecording();
-  final image = picture.toImage(
-    images.first.width,
-    images.first.height,
-  );
+  final image = picture.toImage(width, height);
 
   return image;
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
-
-import 'package:flutter/scheduler.dart';
+import 'package:story_composer/story_composer.dart';
 
 class StoryPage extends StatelessWidget {
   const StoryPage({
@@ -10,7 +8,7 @@ class StoryPage extends StatelessWidget {
     required this.heroId,
   });
 
-  final ui.Image story;
+  final StoryData story;
   final String heroId;
 
   @override
@@ -46,13 +44,10 @@ class StoryPage extends StatelessWidget {
                   child: child,
                 );
               },
-              child: RawImage(
-                image: story,
-                fit: BoxFit.cover,
-              ),
+              child: StoryViewer.thumbnail(data: story),
             );
           },
-          child: RawImage(image: story),
+          child: StoryViewer(data: story),
         ),
       ),
     );

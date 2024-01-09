@@ -69,6 +69,12 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
   void _onTransformUpdate(TransformUpdateDetails details) {
     _transformationController!.onUpdate(details);
     setState(() {});
+
+    _composerController!.setTransformation(
+      key: widget.key!,
+      transform: _transformationController!.transform,
+      size: _size!,
+    );
   }
 
   void _onTransformEnd(TransformEndDetails details) {
@@ -81,6 +87,12 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
     _transformationController = null;
 
     setState(() {});
+
+    _composerController!.setTransformation(
+      key: widget.key!,
+      transform: _transform,
+      size: _size!,
+    );
   }
 
   @override
@@ -126,6 +138,12 @@ class _StoryTransformableWidgetState extends State<StoryTransformableWidget> {
 
                   _didSetTransform = true;
                 }
+
+                _composerController!.setTransformation(
+                  key: widget.key!,
+                  transform: _transform,
+                  size: _size!,
+                );
               },
               child: Visibility.maintain(
                 visible: _didSetTransform || _size != null,

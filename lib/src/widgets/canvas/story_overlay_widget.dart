@@ -14,6 +14,7 @@ class StoryOverlayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StoryRenderableWidget(
+      key: key,
       child: StoryTransformableWidget(
         key: key!,
         initialTransform: initialTransform,

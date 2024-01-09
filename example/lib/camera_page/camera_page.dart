@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:story_composer/story_composer.dart';
@@ -106,6 +107,7 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<StoryPrimaryContent> _onVideoCaptureEnd() async {
     _captureType = _CaptureType.loading;
+
     setState(() {});
 
     final xFile = await _controller!.stopVideoRecording();
@@ -122,6 +124,28 @@ class _CameraPageState extends State<CameraPage> {
     final provider = FileImage(File(file!.path));
 
     return ImageStoryPrimaryContent(provider);
+  }
+
+  Future<void> _onGalleryOpened() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.media,
+    );
+
+    if (result == null) return;
+
+    final resultFile = result.files.single;
+    final file = File(resultFile.path!);
+
+    final primaryContent = acceptedVideoFormats.contains(resultFile.extension!)
+        ? VideoStoryPrimaryContent(file)
+        : ImageStoryPrimaryContent(FileImage(file));
+
+    if (!mounted) return;
+    await primaryContent.precache(context);
+
+    if (!mounted) return;
+    Navigator.pop(context, primaryContent);
   }
 
   @override
@@ -152,6 +176,15 @@ class _CameraPageState extends State<CameraPage> {
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
+                    child: _BottomButtonsRow(
+                      onGalleryOpened: _onGalleryOpened,
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: _CaptureButton(
                       captureType: _captureType,
                       onCaptureStart: _onCaptureStart,
@@ -163,6 +196,44 @@ class _CameraPageState extends State<CameraPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BottomButtonsRow extends StatelessWidget {
+  const _BottomButtonsRow({
+    super.key,
+    required this.onGalleryOpened,
+  });
+
+  final VoidCallback onGalleryOpened;
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonStyle = TextButton.styleFrom(
+      backgroundColor: Colors.black38,
+      foregroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      padding: EdgeInsets.zero,
+      elevation: 0.0,
+    );
+
+    return SizedBox(
+      height: 64.0,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox.square(
+            dimension: 44.0,
+            child: TextButton(
+              onPressed: onGalleryOpened,
+              style: buttonStyle,
+              child: const Icon(Icons.photo_library_rounded),
+            ),
+          ),
+          const Spacer(),
+        ],
       ),
     );
   }

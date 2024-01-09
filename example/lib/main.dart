@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:example/camera_page/camera_page.dart';
 import 'package:example/instagram/instagram_story_composer_page.dart';
 import 'package:example/main_page/story_circle.dart';
 import 'package:example/main_page/story_page.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
@@ -43,14 +46,38 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final _stories = <ui.Image>[];
+  final _stories = <StoryData>[];
 
   Future<void> _onCreate() async {
-    final primaryContent = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CameraPage(),
-      ),
-    );
+    final dynamic primaryContent;
+
+    if (Platform.isAndroid || Platform.isIOS) {
+      primaryContent = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const CameraPage(),
+        ),
+      );
+    } else {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+        type: FileType.media,
+      );
+
+      if (result == null) return;
+
+      final resultFile = result.files.single;
+      final file = File(resultFile.path!);
+
+      if (acceptedVideoFormats.contains(resultFile.extension!)) {
+        primaryContent = VideoStoryPrimaryContent(file);
+      } else {
+        primaryContent = ImageStoryPrimaryContent(FileImage(file));
+      }
+
+      if (mounted && primaryContent is StoryPrimaryContent) {
+        await primaryContent.precache(context);
+      }
+    }
 
     if (primaryContent is! StoryPrimaryContent) {
       return;
@@ -66,7 +93,10 @@ class _MainPageState extends State<MainPage> {
       ),
     );
 
-    if (story != null) {
+    if (!mounted) return;
+
+    if (story is StoryData) {
+      await story.precache(context);
       setState(() {
         _stories.add(story);
       });
@@ -98,6 +128,7 @@ class _MainPageState extends State<MainPage> {
                 ..._stories.map(
                   (story) => StoryCircle(
                     hasBorder: true,
+                    backgroundColor: Colors.transparent,
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -110,8 +141,8 @@ class _MainPageState extends State<MainPage> {
                     },
                     child: Hero(
                       tag: story.hashCode.toString(),
-                      child: RawImage(
-                        image: story,
+                      child: Image(
+                        image: story.thumbnail,
                         fit: BoxFit.cover,
                       ),
                     ),

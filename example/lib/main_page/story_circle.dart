@@ -6,11 +6,13 @@ class StoryCircle extends StatelessWidget {
     required this.child,
     required this.hasBorder,
     this.onTap,
+    this.backgroundColor = Colors.white,
   });
 
   final Widget child;
   final bool hasBorder;
   final VoidCallback? onTap;
+  final Color backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +22,9 @@ class StoryCircle extends StatelessWidget {
           width: 64.0,
           height: 64.0,
           clipBehavior: Clip.antiAlias,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white,
+            color: backgroundColor,
           ),
           child: Stack(
             fit: StackFit.passthrough,

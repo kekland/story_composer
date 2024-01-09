@@ -22,12 +22,12 @@ class _StoryRenderableWidgetState extends State<StoryRenderableWidget> {
     super.didChangeDependencies();
 
     _controller = StoryComposerController.of(context);
-    _controller!.attachRenderable(_key);
+    _controller!.attachRenderable(widget.key!, _key);
   }
 
   @override
   void dispose() {
-    _controller!.detachRenderable(_key);
+    _controller!.detachRenderable(widget.key!);
     super.dispose();
   }
 

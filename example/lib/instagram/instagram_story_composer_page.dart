@@ -90,6 +90,23 @@ class _StoryComposerMainPageState extends State<_StoryComposerMainPage>
     setState(() {});
   }
 
+  Decoration get _backgroundDecoration {
+    if (widget.primaryContent.paletteColors.isEmpty) {
+      return const BoxDecoration(color: Colors.black);
+    }
+
+    return BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          widget.primaryContent.paletteColors.first,
+          widget.primaryContent.paletteColors.last,
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[
@@ -99,7 +116,7 @@ class _StoryComposerMainPageState extends State<_StoryComposerMainPage>
           key: _composerKey,
           primaryContent: widget.primaryContent,
           size: const Size(1080, 1920),
-          backgroundColor: Colors.black,
+          backgroundDecoration: _backgroundDecoration,
           trashAreaWidget: const Padding(
             padding: EdgeInsets.all(16.0),
             child: StoryTrashAreaWidget(size: 64.0),

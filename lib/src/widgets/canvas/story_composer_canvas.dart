@@ -8,7 +8,7 @@ class StoryComposerCanvas extends StatefulWidget {
     required this.size,
     required this.children,
     this.onWidgetRemoved,
-    this.backgroundColor = Colors.black,
+    this.backgroundDecoration = const BoxDecoration(color: Colors.black),
     this.trashAreaWidget,
     this.trashAreaAlignment = Alignment.bottomCenter,
     this.guides,
@@ -22,7 +22,7 @@ class StoryComposerCanvas extends StatefulWidget {
 
   final Size size;
   final List<Widget> children;
-  final Color backgroundColor;
+  final Decoration backgroundDecoration;
   final Widget? trashAreaWidget;
   final Alignment trashAreaAlignment;
   final void Function(Key)? onWidgetRemoved;
@@ -35,8 +35,9 @@ class StoryComposerCanvas extends StatefulWidget {
 
 class StoryComposerCanvasState extends State<StoryComposerCanvas> {
   late final controller = StoryComposerController(
+    primaryContent: widget.primaryContent,
     size: widget.size,
-    backgroundColor: widget.backgroundColor,
+    backgroundDecoration: widget.backgroundDecoration,
     getChildPaintIndex: getChildIndex,
     onWidgetRemoved: widget.onWidgetRemoved,
     positionedGuides:
@@ -68,8 +69,8 @@ class StoryComposerCanvasState extends State<StoryComposerCanvas> {
         children: [
           ClipRect(
             child: SizedBox.expand(
-              child: ColoredBox(
-                color: widget.backgroundColor,
+              child: DecoratedBox(
+                decoration: widget.backgroundDecoration,
                 child: Stack(
                   children: [
                     widget.primaryContentBuilder(

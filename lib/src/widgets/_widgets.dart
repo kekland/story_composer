@@ -11,3 +11,4 @@ export 'trash_area/story_trash_area_reaction.dart';
 export 'trash_area/story_trash_area_state_mixin.dart';
 export 'trash_area/story_trash_area_widget.dart';
 export 'utils/layout_time_size_notifier_widget.dart';
+export 'viewer/story_viewer.dart';

@@ -15,10 +15,11 @@ class StoryPrimaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StoryRenderableWidget(
+      key: key,
       child: StoryTransformableWidget(
         key: key!,
-        initialTransform: initialTransform ?? Matrix4.identity(),
-        transformationPointerCount: 2,
+        initialTransform: initialTransform,
+        transformationPointerCount: 1,
         isPersistent: false,
         child: child,
       ),
@@ -48,7 +49,7 @@ class StoryDefaultPrimaryContentWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final _primaryContent = primaryContent;
 
-    final Widget child;
+    Widget child;
 
     if (_primaryContent is ImageStoryPrimaryContent) {
       child = Image(
@@ -62,6 +63,11 @@ class StoryDefaultPrimaryContentWidget extends StatelessWidget {
     } else {
       throw Exception('Unknown primary content type: $_primaryContent');
     }
+
+    child = AspectRatio(
+      aspectRatio: primaryContent.size.aspectRatio,
+      child: child,
+    );
 
     return StoryPrimaryWidget(
       key: key!,
@@ -91,6 +97,7 @@ class __VideoStoryPrimaryContentWidgetState
 
     widget.controller.play();
     widget.controller.setLooping(true);
+    widget.controller.setVolume(0.0);
   }
 
   @override
